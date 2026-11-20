@@ -1,0 +1,23 @@
+{
+  "scenario": {
+    "distanceKm": 15,
+    "isSynthetic": false,
+    "dataWarning": "One-way 15 km estimates using Dutch reference tariffs and Milieu Centraal emission factors. Parking fees, personal OV discounts, and live delays are excluded."
+  },
+  "defaultPreferences": {
+    "maxBudgetEUR": 6,
+    "maxTimeMinutes": 60
+  },
+  "modes": [
+    { "id": "car", "label": "Car", "costEUR": 2.15, "minutes": 22, "kgCO2e": 2.22 },
+    { "id": "train", "label": "Train", "costEUR": 3.44, "minutes": 28, "kgCO2e": 0.23 },
+    { "id": "bus", "label": "Bus", "costEUR": 4.16, "minutes": 38, "kgCO2e": 1.25 },
+    { "id": "bicycle", "label": "Bicycle", "costEUR": 0.20, "minutes": 55, "kgCO2e": 0.00 }
+  ],
+  "sources": [
+    "Train tariff formula: €0.90 base + €0.169/km (NS 2nd-class distance rate)",
+    "Bus tariff formula: €1.16 boarding tariff + €0.20/km (regional OVpay rate)",
+    "Car & Bicycle: variable running/maintenance cost per 15 km trip (Nibud)",
+    "CO₂e emissions: Milieu Centraal (CE Delft, TNO & EVDB) per passenger-km"
+  ]
+}
