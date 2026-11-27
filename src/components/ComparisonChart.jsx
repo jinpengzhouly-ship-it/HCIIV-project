@@ -855,14 +855,14 @@ export default function ComparisonChart({
   const isCustomChart = view === 'map' || view === 'slope' || view === 'weighted';
 
   return (
-    <section className="panel col-main" aria-labelledby="h-cmp">
+    <section className="panel col-main" aria-labelledby="h-cmp" data-tour="panel-compare">
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px' }}>
         <div>
           <h2 id="h-cmp" style={{ fontSize: '19px' }}>Compare your options</h2>
           <p className="sub">All modes share the same 15 km example trip. Switch views or timeframe to explore trade-offs.</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div data-tour="control-timeframe" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: '#fff', padding: '4px 6px' }}>
           <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--muted2)' }}>Timeframe:</span>
           <div className="seg" role="group" aria-label="Time horizon">
             {TIMEFRAMES.map((t) => (
