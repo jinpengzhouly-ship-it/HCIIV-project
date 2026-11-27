@@ -16,6 +16,7 @@ import {
   computeTradeoffs,
 } from './utils/computeTradeoffs';
 import ComparisonChart from './components/ComparisonChart';
+import OnboardingGuide from './components/OnboardingGuide';
 
 function Icon({ d, size = 20, sw = 1.9 }) {
   return (
@@ -30,7 +31,6 @@ export default function App() {
   const [budget, setBudget] = useState(() => clampB(parseFloat(q.get('budget') ?? scenarioData.defaultPreferences.maxBudgetEUR)));
   const [time, setTime] = useState(() => clampT(parseFloat(q.get('time') ?? scenarioData.defaultPreferences.maxTimeMinutes)));
   const [timeframe, setTimeframe] = useState(() => q.get('tf') || 'trip');
-  const [baselineMode, setBaselineMode] = useState('car');
   const [selected, setSelected] = useState(() => q.get('select') || null);
   const [chosen, setChosen] = useState(null);
   const [view, setView] = useState(() => q.get('view') || 'all');
@@ -38,8 +38,34 @@ export default function App() {
   const [hover, setHover] = useState(null);
   const [aboutOpen, setAboutOpen] = useState(false);
 
+  const [guideOpen, setGuideOpen] = useState(() => {
+    if (q.get('guide') === '1') return true;
+    try {
+      return localStorage.getItem('itt_guide_seen_v1') !== 'true';
+    } catch {
+      return true;
+    }
+  });
+  const [guideStep, setGuideStep] = useState(0);
+
+  const handleCloseGuide = () => {
+    setGuideOpen(false);
+    try {
+      localStorage.setItem('itt_guide_seen_v1', 'true');
+    } catch {
+      // Ignore storage restrictions
+    }
+  };
+
+  const handleOpenGuide = () => {
+    setGuideStep(0);
+    setGuideOpen(true);
+  };
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') setAboutOpen(false); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setAboutOpen(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -64,7 +90,10 @@ export default function App() {
   };
 
   const limText = `a ${eur(budget)} budget and ${time}-minute limit`;
-  let insightA = '', insightB = '', insightC = '';
+  let insightA = '';
+  let insightB = '';
+  let insightC = '';
+
   if (n === 0) {
     insightA = 'No option fits both limits. Increase your budget or travel time to see more choices.';
     const best = modes.reduce((acc, m) => {
@@ -124,9 +153,17 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-          <span className="pill" style={{ color: '#7A4A0C', background: 'var(--warn-bg)', border: '1px solid var(--warn-border)' }}>
+          <span
+            className="pill"
+            style={
+              scenarioData.scenario.isSynthetic
+                ? { color: '#7A4A0C', background: 'var(--warn-bg)', border: '1px solid var(--warn-border)' }
+                : { color: 'var(--ok)', background: 'var(--ok-bg)', border: '1px solid #B7DFC9' }
+            }
+          >
             {scenarioData.scenario.isSynthetic ? 'Illustrative data' : 'Sourced Dutch data'}
           </span>
+          <button className="btn" onClick={handleOpenGuide}>Quick guide</button>
           <button className="btn" onClick={() => setAboutOpen(true)}>About these estimates</button>
         </div>
       </header>
@@ -148,7 +185,7 @@ export default function App() {
       </section>
 
       <div className="main-row">
-        <section className="panel col-side" aria-labelledby="h-prio" style={{ gap: '22px' }}>
+        <section className="panel col-side" aria-labelledby="h-prio" data-tour="panel-priorities" style={{ gap: '22px' }}>
           <div>
             <h2 id="h-prio" style={{ fontSize: '19px' }}>Your priorities</h2>
             <p className="sub">Set your per-trip limits to see which options still work.</p>
@@ -212,13 +249,11 @@ export default function App() {
           budget={budget}
           time={time}
           timeframe={timeframe}
-          baselineMode={baselineMode}
           view={view}
           sort={sort}
           selected={selected}
           hover={hover}
           onTimeframeChange={setTimeframe}
-          onBaselineChange={setBaselineMode}
           onViewChange={setView}
           onSortChange={setSort}
           onPickMode={handlePickMode}
@@ -226,7 +261,7 @@ export default function App() {
           onReset={handleReset}
         />
 
-        <section className="panel col-side" aria-labelledby="h-sel" aria-live="polite" style={{ gap: '16px' }}>
+        <section className="panel col-side" aria-labelledby="h-sel" aria-live="polite" data-tour="panel-decision" style={{ gap: '16px' }}>
           <h2 id="h-sel" style={{ fontSize: '19px' }}>Your selected option</h2>
           {!selMode ? (
             <div className="empty-sel">
@@ -242,7 +277,10 @@ export default function App() {
               tf={tf}
               isChosen={chosen === selMode.id}
               onChoose={() => setChosen(selMode.id)}
-              onClear={() => { setSelected(null); setChosen(null); }}
+              onClear={() => {
+                setSelected(null);
+                setChosen(null);
+              }}
             />
           )}
         </section>
@@ -325,11 +363,15 @@ export default function App() {
             </ul>
           </div>
           <div>
-            <h3 style={{ fontSize: '16px', marginBottom: '6px' }}>Reference sources</h3>
+            <h3 style={{ fontSize: '16px', marginBottom: '6px' }}>Reference sources &amp; assumptions</h3>
             <ul>
-              <li>NS and 9292: train and public-transport fares and durations</li>
-              <li>Nibud: household and car running costs</li>
-              <li>Milieu Centraal &amp; CBS: emission factors per mode</li>
+              {(scenarioData.sources || [
+                'NS and 9292: train and public-transport fares and durations',
+                'Nibud: household and car running costs',
+                'Milieu Centraal & CBS: emission factors per mode',
+              ]).map((src) => (
+                <li key={src}>{src}</li>
+              ))}
             </ul>
           </div>
           <button className="btn btn-primary" onClick={() => setAboutOpen(false)} style={{ marginTop: 'auto' }}>
@@ -337,6 +379,13 @@ export default function App() {
           </button>
         </div>
       </div>
+
+      <OnboardingGuide
+        open={guideOpen}
+        stepIndex={guideStep}
+        onStepChange={setGuideStep}
+        onClose={handleCloseGuide}
+      />
     </div>
   );
 }
